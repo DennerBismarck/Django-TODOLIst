@@ -15,4 +15,7 @@ class Tarefa(models.Model):
     prazo = models.DateField()
     data_conclusao = models.DateField(null=True, blank=True)
     situacao = models.CharField(choices=situacoes_possiveis, max_length=2)
+
+    def __str__(self):
+        return self.titulo
     
