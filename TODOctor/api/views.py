@@ -1,6 +1,7 @@
 #API Views
 from rest_framework.response import Response 
 from rest_framework.decorators import api_view
+from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from main.models import Tarefa
 from .serializers import TarefaSerializer
@@ -13,8 +14,13 @@ def ConfigTest(request):
 
 @api_view(['GET'])
 def TarefaGetAll(request):
+    paginator = PageNumberPagination()
+    paginator.page_size = 5
+
     tarefas = Tarefa.objects.all()
-    serializer = TarefaSerializer(tarefas, many = True)
+    pagina_resultante = paginator.paginate_queryset(tarefas, request)
+
+    serializer = TarefaSerializer(pagina_resultante, many = True)
     return Response(serializer.data)
 
 @api_view(['POST'])
