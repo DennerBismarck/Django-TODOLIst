@@ -48,3 +48,19 @@ def TarefaGetOne(request, id):
     serializer = TarefaSerializer(tarefa_procurada, many = False)
 
     return Response(serializer.data)
+
+@api_view(['PUT'])
+def UpdateTarefa(request,id):
+
+    try:
+        tarefa = Tarefa.objects.get(pk=id)
+    except Tarefa.DoesNotExist:
+        return Response({'error': 'Tarefa não encontrada'}, status=status.HTTP_404_NOT_FOUND)
+    
+    serializer = TarefaSerializer(tarefa, data=request.data)
+    
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
