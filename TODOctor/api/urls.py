@@ -6,4 +6,5 @@ from . import views
 urlpatterns = [
     path('tarefasList',views.TarefaGetAll, name='tarefa-list'),
     path('addTarefa',views.AddTarefa, name='add-tarefa'),
+    path('tarefaSearch/<int:id>',views.TarefaGetOne, name='search-tarefa'),
 ]
