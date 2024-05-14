@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
+from django.db.models import Q
 from main.models import Tarefa
 from .serializers import TarefaSerializer
 
@@ -14,10 +15,16 @@ def ConfigTest(request):
 
 @api_view(['GET'])
 def TarefaGetAll(request):
+    search_query = request.query_params.get('search', None)
+
+    tarefas = Tarefa.objects.all()
+
+    if search_query:
+        tarefas = Tarefa.objects.filter(Q(titulo__icontains=search_query) | Q(descricao__icontains=search_query))
+
     paginator = PageNumberPagination()
     paginator.page_size = 5
 
-    tarefas = Tarefa.objects.all()
     pagina_resultante = paginator.paginate_queryset(tarefas, request)
 
     serializer = TarefaSerializer(pagina_resultante, many = True)
