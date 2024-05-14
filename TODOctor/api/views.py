@@ -1,37 +1,37 @@
-#API Views
-from rest_framework.response import Response 
+# API Views
+from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from django.db.models import Q
 from main.models import Tarefa
 from .serializers import TarefaSerializer
-
-
-@api_view(['GET'])
-def ConfigTest(request):
-    test = {'Título':'Desenvolver API', 'Descrição': 'Desenvolver API de To-Do List', 'Prazo':'09/05/2024', 'Data de Conclusão':'09/05/2024', 'Situação':'Em Andamento'}
-    return Response(test)
+from .helpers import get_tarefa
 
 @api_view(['GET'])
 def TarefaGetAll(request):
+    """
+    Retorna uma lista paginada de tarefas.
+    Se 'search' for fornecido, filtra as tarefas pelo título ou descrição.
+    """
     search_query = request.query_params.get('search', None)
-
     tarefas = Tarefa.objects.all()
 
     if search_query:
-        tarefas = Tarefa.objects.filter(Q(titulo__icontains=search_query) | Q(descricao__icontains=search_query))
+        tarefas = tarefas.filter(Q(titulo__icontains=search_query) | Q(descricao__icontains=search_query))
 
     paginator = PageNumberPagination()
     paginator.page_size = 5
-
     pagina_resultante = paginator.paginate_queryset(tarefas, request)
 
-    serializer = TarefaSerializer(pagina_resultante, many = True)
-    return Response(serializer.data)
+    serializer = TarefaSerializer(pagina_resultante, many=True)
+    return paginator.get_paginated_response(serializer.data)
 
 @api_view(['POST'])
 def AddTarefa(request):
+    """
+    Adiciona uma nova tarefa.
+    """
     serializer = TarefaSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
@@ -40,27 +40,40 @@ def AddTarefa(request):
 
 @api_view(['GET'])
 def TarefaGetOne(request, id):
-    try:
-        tarefa_procurada = Tarefa.objects.get(pk=id)
-    except Tarefa.DoesNotExist:
+    """
+    Retorna os detalhes de uma tarefa específica.
+    """
+    tarefa_procurada = get_tarefa(id)
+    if tarefa_procurada is None:
         return Response({'error': 'Tarefa não encontrada'}, status=status.HTTP_404_NOT_FOUND)
     
-    serializer = TarefaSerializer(tarefa_procurada, many = False)
-
+    serializer = TarefaSerializer(tarefa_procurada)
     return Response(serializer.data)
 
 @api_view(['PUT'])
-def UpdateTarefa(request,id):
-
-    try:
-        tarefa = Tarefa.objects.get(pk=id)
-    except Tarefa.DoesNotExist:
+def UpdateTarefa(request, id):
+    """
+    Atualiza uma tarefa existente.
+    """
+    tarefa_procurada = get_tarefa(id)
+    if tarefa_procurada is None:
         return Response({'error': 'Tarefa não encontrada'}, status=status.HTTP_404_NOT_FOUND)
     
-    serializer = TarefaSerializer(tarefa, data=request.data)
-    
+    serializer = TarefaSerializer(tarefa_procurada, data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+def DeleteTarefa(request, id):
+    """
+    Deleta uma tarefa específica.
+    """
+    tarefa = get_tarefa(id)
+    if tarefa is None:
+        return Response({'error': 'Tarefa não encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+    tarefa.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
