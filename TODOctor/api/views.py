@@ -14,18 +14,24 @@ def TarefaGetAll(request):
     Retorna uma lista paginada de tarefas.
     Se 'search' for fornecido, filtra as tarefas pelo título ou descrição.
     """
+    
     search_query = request.query_params.get('search', None)
-    tarefas = Tarefa.objects.all()
+
+    tarefas = Tarefa.objects.all().order_by('id')
 
     if search_query:
-        tarefas = tarefas.filter(Q(titulo__icontains=search_query) | Q(descricao__icontains=search_query))
+        tarefas = Tarefa.objects.filter(
+            Q(titulo__icontains=search_query) | Q(descricao__icontains=search_query)
+        ).order_by('id')
 
     paginator = PageNumberPagination()
     paginator.page_size = 5
+
     pagina_resultante = paginator.paginate_queryset(tarefas, request)
 
     serializer = TarefaSerializer(pagina_resultante, many=True)
     return paginator.get_paginated_response(serializer.data)
+
 
 @api_view(['POST'])
 def AddTarefa(request):
@@ -50,7 +56,7 @@ def TarefaGetOne(request, id):
     serializer = TarefaSerializer(tarefa_procurada)
     return Response(serializer.data)
 
-@api_view(['PUT'])
+@api_view(['PATCH'])
 def UpdateTarefa(request, id):
     """
     Atualiza uma tarefa existente.
@@ -59,7 +65,7 @@ def UpdateTarefa(request, id):
     if tarefa_procurada is None:
         return Response({'error': 'Tarefa não encontrada'}, status=status.HTTP_404_NOT_FOUND)
     
-    serializer = TarefaSerializer(tarefa_procurada, data=request.data)
+    serializer = TarefaSerializer(tarefa_procurada, data=request.data, partial = True)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
