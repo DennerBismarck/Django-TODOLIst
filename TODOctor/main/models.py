@@ -4,12 +4,12 @@ from django.db import models
 
 class Tarefa(models.Model):
 
-    class situacoes_possiveis(models.TextChoices):
-        NOVA = 'NO', 'Nova'
-        EM_ANDAMENTO = 'AN', 'Em andamento'
-        CONCLUIDA = 'CO', 'Concluida'
-        CANCELADA = 'CA', 'Cancelada' 
-
+    situacoes_possiveis = [
+        ('NO', 'Nova'),
+        ('AN', 'Em Andamento'),
+        ('CO', 'Concluída'),
+        ('CA', 'Cancelada')
+    ]
     titulo = models.CharField(max_length=100, null=False)
     descricao = models.CharField(max_length=250, blank=True)
     prazo = models.DateField()
